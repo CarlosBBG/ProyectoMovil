@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { 
   View, 
   Text, 
@@ -15,19 +15,19 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
-// Agrega esta línea en la sección de imports
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 const InicioSesion = () => {
   const navigation = useNavigation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const passwordRef = useRef(null);
 
   const handleLogin = async () => {
     try {
-        console.log("URL:", process.env.EXPO_PUBLIC_API_URL);
+      console.log("URL:", process.env.EXPO_PUBLIC_API_URL);
       const response = await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/login`, {
         correo: email,
         password: password,
@@ -35,14 +35,11 @@ const InicioSesion = () => {
 
       const { token, ...user } = response.data;
       
-      // Guardar en AsyncStorage (reemplazo de localStorage)
-      // Necesitarás instalar @react-native-async-storage/async-storage
       await AsyncStorage.setItem('usuario', JSON.stringify(user));
       await AsyncStorage.setItem('token', token);
 
       Alert.alert("Bienvenido", "Inicio de sesión exitoso");
 
-      // Navegación basada en rol
       if (user.role === 'admin') {
         navigation.navigate('Administrador');
       } else if (user.role === 'conductor') {
@@ -68,62 +65,67 @@ const InicioSesion = () => {
         style={styles.container}
       >
         <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <View style={styles.logoContainer}>
+          {/* Header: Logo y Título en la misma línea */}
+          <View style={styles.headerContainer}>
             <Image
               source={{ uri: "https://ici2st.epn.edu.ec/eventosAnteriores/ICI2ST2023/images/ici2st2023/Logo_EPN.png" }}
               style={styles.logoEPN}
               resizeMode="contain"
             />
             <Text style={styles.tituloPrincipal}>SISTEMA DE TRANSPORTE ESTUDIANTIL</Text>
-            <Image
-              source={{ uri: "/polibus-logo-500h.png" }}
-              style={styles.logoSecundario}
-              resizeMode="contain"
-            />
           </View>
+          
+          {/* Formulario de inicio de sesión centrado */}
+          <View style={styles.formWrapper}>
+            <View style={styles.formContainer}>
+              <Text style={styles.tituloFormulario}>Iniciar Sesión</Text>
+              
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Correo</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="alguien@example.com"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  returnKeyType="next"
+                  value={email}
+                  onChangeText={setEmail}
+                  onSubmitEditing={() => passwordRef.current.focus()}
+                  blurOnSubmit={false}
+                />
+              </View>
 
-          <View style={styles.formContainer}>
-            <Text style={styles.tituloFormulario}>Iniciar Sesión</Text>
-            
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>Correo</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="alguien@example.com"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                value={email}
-                onChangeText={setEmail}
-              />
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Contraseña</Text>
+                <TextInput
+                  ref={passwordRef}
+                  style={styles.input}
+                  placeholder="Contraseña"
+                  secureTextEntry
+                  returnKeyType="go"
+                  value={password}
+                  onChangeText={setPassword}
+                  onSubmitEditing={handleLogin}
+                />
+              </View>
+
+              <TouchableOpacity 
+                style={styles.boton}
+                onPress={handleLogin}
+              >
+                <Text style={styles.botonTexto}>Ingresar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.registroLink}
+                onPress={() => navigation.navigate("Registro")}
+              >
+                <Text style={styles.registroTexto}>
+                  ¿No estás registrado?{" "}
+                  <Text style={styles.registroLinkTexto}>Regístrate</Text>
+                </Text>
+              </TouchableOpacity>
             </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>Contraseña</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Contraseña"
-                secureTextEntry
-                value={password}
-                onChangeText={setPassword}
-              />
-            </View>
-
-            <TouchableOpacity 
-              style={styles.boton}
-              onPress={handleLogin}
-            >
-              <Text style={styles.botonTexto}>Ingresar</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.registroLink}
-              onPress={() => navigation.navigate("Registro")}
-            >
-              <Text style={styles.registroTexto}>
-                ¿No estás registrado?{" "}
-                <Text style={styles.registroLinkTexto}>Regístrate</Text>
-              </Text>
-            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -141,40 +143,48 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 20,
   },
-  logoContainer: {
+  headerContainer: {
+    flexDirection: "row",
     alignItems: "center",
-    padding: 20,
+    justifyContent: "center",
+    marginBottom: 20,
   },
   logoEPN: {
-    width: 150,
-    height: 150,
-    marginBottom: 10,
+    width: 80,
+    height: 80,
+    marginRight: 10,
   },
   tituloPrincipal: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "bold",
     color: "#001F5B",
     textAlign: "center",
-    marginVertical: 10,
   },
-  logoSecundario: {
-    width: 200,
-    height: 100,
-    marginTop: 20,
+  formWrapper: {
+    flex: 1,
+    alignItems: "center",
   },
   formContainer: {
-    padding: 40,
-    borderTopWidth: 1,
-    borderColor: "#CCC",
+    width: "100%",
+    backgroundColor: "#FFF",
+    borderRadius: 10,
+    paddingVertical: 30,
+    paddingHorizontal: 20,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 2 },
   },
   tituloFormulario: {
     fontSize: 24,
     fontWeight: "bold",
     color: "#001F5B",
     textAlign: "center",
-    marginBottom: 30,
+    marginBottom: 25,
   },
   formGroup: {
     marginBottom: 20,
@@ -197,7 +207,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#001F5B",
     borderRadius: 30,
     padding: 15,
-    marginTop: 20,
+    marginTop: 10,
     alignItems: "center",
   },
   botonTexto: {
@@ -206,7 +216,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   registroLink: {
-    marginTop: 20,
+    marginTop: 15,
     alignItems: "center",
   },
   registroTexto: {
