@@ -5,17 +5,17 @@ import {
   StyleSheet, 
   ActivityIndicator, 
   Dimensions, 
-  ScrollView 
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  Alert
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import ConductorBienvenida from '../Componentes/ConductorBienvenida';
 import Encabezado from '../Componentes/Encabezado';
-import BarraLateral from '../Componentes/BarraLateral';
 
-const { width, height } = Dimensions.get('window');
-const isMobile = width < 768; // Consideramos móvil si el ancho es menor a 768px
+const { width } = Dimensions.get('window');
 
 const ConductorPantallaInicio = () => {
   const navigation = useNavigation();
@@ -23,20 +23,18 @@ const ConductorPantallaInicio = () => {
   const [loading, setLoading] = useState(true);
 
   const menuItems = [
-    { label: "Inicio", link: "ConductorInicio" },
     { label: "Iniciar Ruta", link: "ConductorIniciarRuta" },
     { label: "Ver Estado de la Ruta", link: "ConductorRutaCheck" },
   ];
 
   const mensaje = "Bienvenido al Sistema de Transporte Estudiantil";
-  const imagen = require('./polibus-logo-500h.png');
 
   useEffect(() => {
     const fetchConductor = async () => {
       try {
         const storedUser = await AsyncStorage.getItem('usuario');
         const token = await AsyncStorage.getItem('token');
-        
+
         if (!storedUser || !token) {
           navigation.navigate('Login');
           return;
@@ -73,37 +71,32 @@ const ConductorPantallaInicio = () => {
   return (
     <View style={styles.container}>
       <Encabezado />
-      
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.contentContainer}>
-          {/* Barra lateral solo en desktop */}
-          {!isMobile && conductor && (
-            <BarraLateral
-              userName={`${conductor.nombre} ${conductor.apellido}`}
-              userRole={conductor.role || "Conductor"}
-              userIcon="https://cdn-icons-png.flaticon.com/128/1464/1464721.png"
-              menuItems={menuItems}
-            />
-          )}
-
-          {/* Contenido principal */}
-          <View style={styles.mainContent}>
-            <ConductorBienvenida mensaje={mensaje} imagen={imagen} />
-            
-            {/* Menú alternativo para móviles */}
-            {isMobile && conductor && (
-              <View style={styles.mobileMenu}>
-                {menuItems.map((item, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.menuButton}
-                    onPress={() => navigation.navigate(item.link)}
-                  >
-                    <Text style={styles.menuButtonText}>{item.label}</Text>
-                  </TouchableOpacity>
-                ))}
+      <ScrollView contentContainerStyle={styles.dashboardScroll}>
+        <View style={styles.dashboardContainer}>
+          <View style={styles.welcomeContainer}>
+            <Text style={styles.mensaje}>{mensaje}</Text>
+            <View style={styles.infoContainer}>
+              <Image 
+                source={{ uri: "https://cdn-icons-png.flaticon.com/128/1464/1464721.png" }}
+                style={styles.icon}
+                resizeMode="contain"
+              />
+              <View style={styles.textContainer}>
+                <Text style={styles.nombre}>{conductor.nombre} {conductor.apellido}</Text>
+                <Text style={styles.role}>{conductor.role || "Conductor"}</Text>
               </View>
-            )}
+            </View>
+          </View>
+          <View style={styles.menuContainer}>
+            {menuItems.map((item, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.menuButton}
+                onPress={() => navigation.navigate(item.link)}
+              >
+                <Text style={styles.menuButtonText}>{item.label}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
       </ScrollView>
@@ -116,27 +109,56 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  scrollContainer: {
+  dashboardScroll: {
     flexGrow: 1,
+    padding: 20,
   },
-  contentContainer: {
+  dashboardContainer: {
     flex: 1,
-    flexDirection: isMobile ? 'column' : 'row',
-  },
-  mainContent: {
-    flex: 1,
-    padding: isMobile ? 10 : 20,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  mobileMenu: {
-    marginTop: 20,
+  welcomeContainer: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  mensaje: {
+    fontSize: width < 768 ? 24 : 32,
+    fontWeight: 'bold',
+    color: '#001f5b',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  infoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f2f2f2',
+    padding: 15,
+    borderRadius: 10,
+  },
+  icon: {
+    width: width < 768 ? 60 : 80,
+    height: width < 768 ? 60 : 80,
+    borderRadius: (width < 768 ? 60 : 80) / 2,
+    marginRight: 15,
+  },
+  textContainer: {
+    justifyContent: 'center',
+  },
+  nombre: {
+    fontSize: width < 768 ? 20 : 26,
+    fontWeight: 'bold',
+    color: '#001f5b',
+  },
+  role: {
+    fontSize: width < 768 ? 16 : 20,
+    color: '#888',
+  },
+  menuContainer: {
     borderTopWidth: 1,
     borderTopColor: '#ccc',
     paddingTop: 20,
+    width: '100%',
   },
   menuButton: {
     backgroundColor: '#001f5b',
@@ -148,6 +170,11 @@ const styles = StyleSheet.create({
     color: 'white',
     textAlign: 'center',
     fontWeight: 'bold',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

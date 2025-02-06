@@ -6,11 +6,14 @@ import {
   Image, 
   TouchableOpacity, 
   StyleSheet, 
-  Dimensions 
+  Dimensions,
+  SafeAreaView
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
+// Calcula un ancho responsivo: 15% de ancho en pantallas grandes o mínimo 200px en tablet/desktop; en móviles se ocupa 90% del ancho.
+const containerWidth = width < 768 ? width * 0.9 : Math.max(width * 0.15, 200);
 
 const BarraLateral = ({ userName, userRole, userIcon, menuItems }) => {
   const navigation = useNavigation();
@@ -49,7 +52,7 @@ const BarraLateral = ({ userName, userRole, userIcon, menuItems }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={[styles.container]}>
       <View style={styles.header}>
         <Image 
           source={typeof userIcon === 'string' ? { uri: userIcon } : userIcon} 
@@ -60,7 +63,6 @@ const BarraLateral = ({ userName, userRole, userIcon, menuItems }) => {
           <Text style={styles.role}>{userRole}</Text>
         </View>
       </View>
-
       <View style={styles.menu}>
         {menuItems.map((item, index) => (
           <TouchableOpacity
@@ -81,18 +83,18 @@ const BarraLateral = ({ userName, userRole, userIcon, menuItems }) => {
           </TouchableOpacity>
         ))}
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    width: width * 0.15, // 15% del ancho de pantalla
+    width: containerWidth,
     backgroundColor: '#f5f5f5',
     padding: 20,
     borderRightWidth: 1,
     borderRightColor: '#ccc',
-    height: '100%'
+    flexGrow: 1,
   },
   header: {
     flexDirection: 'row',

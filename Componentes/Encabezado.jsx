@@ -5,49 +5,45 @@ import {
   Text, 
   Image, 
   TouchableOpacity, 
-  StyleSheet 
+  StyleSheet,
+  SafeAreaView
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Encabezado = ({ logoSrc, text }) => {
   const navigation = useNavigation();
+  
 
   const handleLogout = async () => {
     try {
-      // Eliminar el usuario de AsyncStorage
       await AsyncStorage.removeItem('usuario');
-      navigation.navigate('Login'); // Navegar a la pantalla de inicio de sesión
+      navigation.navigate('Login');
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Image 
-        source={{ uri: logoSrc }} 
-        style={styles.logo} 
-        resizeMode="contain"
-      />
-      
-      <Text style={styles.text}>{text}</Text>
-
-      <TouchableOpacity 
-        style={styles.button} 
-        onPress={handleLogout}
-      >
+    <SafeAreaView style={styles.safeContainer}>
+      <View style={styles.container}>
         <Image 
-          source={{ uri: 'https://cdn-icons-png.flaticon.com/128/906/906811.png' }} 
-          style={styles.icon} 
+          source={{ uri: logoSrc }} 
+          style={styles.logo} 
           resizeMode="contain"
         />
-      </TouchableOpacity>
-    </View>
+        
+
+        <Text style={styles.text}>{text}</Text>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeContainer: {
+    backgroundColor: '#ffffff',
+  },
   container: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -56,6 +52,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
+    width: '100%',
   },
   logo: {
     width: 125,
