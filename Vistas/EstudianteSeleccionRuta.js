@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Button, ActivityIndicator, Alert, TouchableOpacity, StyleSheet } from 'react-native';
+import { 
+  View, 
+  Text, 
+  Button, 
+  ActivityIndicator, 
+  Alert, 
+  TouchableOpacity, 
+  StyleSheet, 
+  ScrollView 
+} from 'react-native';
 import axios from "axios";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -28,7 +37,11 @@ const EstudianteSeleccionRuta = ({ navigation }) => {
           headers: { Authorization: `Bearer ${token}` },
         });
 
+        // Set the estudiante data and, if available, recover the previously selected route.
         setEstudiante(response.data);
+        if (response.data.ruta) {
+          setSelectedRutaId(response.data.ruta);
+        }
       } catch (error) {
         console.error("Error al obtener datos del estudiante:", error);
         Alert.alert("Error", "No se pudo cargar la información del estudiante.");
@@ -38,7 +51,7 @@ const EstudianteSeleccionRuta = ({ navigation }) => {
     };
 
     fetchEstudiante();
-  }, []);
+  }, [navigation]);
 
   useEffect(() => {
     const fetchRutas = async () => {
@@ -61,7 +74,7 @@ const EstudianteSeleccionRuta = ({ navigation }) => {
       Alert.alert("Error", "No se encontró información del estudiante.");
       return;
     }
-
+    // Toggle pending selection.
     setPendingRutaId(pendingRutaId === id ? null : id);
   };
 
@@ -70,9 +83,11 @@ const EstudianteSeleccionRuta = ({ navigation }) => {
 
     try {
       const token = await AsyncStorage.getItem("token");
-      await axios.put(`${process.env.EXPO_PUBLIC_API_URL}/estudiantes/${estudiante.id}/ruta`, { ruta: pendingRutaId }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.put(
+        `${process.env.EXPO_PUBLIC_API_URL}/estudiantes/${estudiante.id}/ruta`, 
+        { ruta: pendingRutaId }, 
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       setSelectedRutaId(pendingRutaId);
       setPendingRutaId(null);
       Alert.alert("Éxito", "Ruta actualizada exitosamente.");
@@ -85,9 +100,11 @@ const EstudianteSeleccionRuta = ({ navigation }) => {
   const handleRemoveRuta = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
-      await axios.put(`${process.env.EXPO_PUBLIC_API_URL}/estudiantes/${estudiante.id}/ruta`, { ruta: null }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.put(
+        `${process.env.EXPO_PUBLIC_API_URL}/estudiantes/${estudiante.id}/ruta`, 
+        { ruta: null }, 
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       setSelectedRutaId(null);
       Alert.alert("Éxito", "Ruta eliminada exitosamente.");
     } catch (error) {
@@ -108,24 +125,34 @@ const EstudianteSeleccionRuta = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Seleccione su ruta:</Text>
-      {rutas.map((ruta) => (
-        <TouchableOpacity
-          key={ruta.id}
-          style={[styles.routeCard, 
-            pendingRutaId === ruta.id ? styles.pending : selectedRutaId === ruta.id ? styles.selected : styles.default]}
-          onPress={() => handleRutaClick(ruta.id)}
-        >
-          <Text>{ruta.nombre}</Text>
-          {pendingRutaId === ruta.id && (
-            <View style={styles.actionButtons}>
-              <Button title="Aceptar" onPress={handleAccept} />
-              <Button title="Cancelar" onPress={() => setPendingRutaId(null)} />
-            </View>
-          )}
-        </TouchableOpacity>
-      ))}
+      <ScrollView style={styles.routesContainer}>
+        {rutas.map((ruta) => (
+          <TouchableOpacity
+            key={ruta.id}
+            style={[
+              styles.routeCard, 
+              pendingRutaId === ruta.id 
+                ? styles.pending 
+                : selectedRutaId === ruta.id 
+                  ? styles.selected 
+                  : styles.default
+            ]}
+            onPress={() => handleRutaClick(ruta.id)}
+          >
+            <Text style={styles.routeName}>{ruta.nombre}</Text>
+            {pendingRutaId === ruta.id && (
+              <View style={styles.actionButtons}>
+                <Button title="Aceptar" onPress={handleAccept} />
+                <Button title="Cancelar" onPress={() => setPendingRutaId(null)} />
+              </View>
+            )}
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
       {selectedRutaId && (
-        <Button title="Quitar Ruta" onPress={handleRemoveRuta} />
+        <View style={styles.removeButton}>
+          <Button title="Quitar Ruta" onPress={handleRemoveRuta} />
+        </View>
       )}
     </View>
   );
@@ -147,6 +174,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 10,
   },
+  routesContainer: {
+    alignSelf: 'stretch',
+    marginBottom: 20,
+  },
   routeCard: {
     padding: 15,
     marginVertical: 5,
@@ -154,22 +185,26 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
   },
+  default: {
+    backgroundColor: '#c5b6e0',
+  },
   pending: {
     backgroundColor: '#FFD700',
   },
   selected: {
     backgroundColor: '#32A94C',
   },
-  default: {
-    backgroundColor: '#c5b6e0',
-  },
   actionButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 5,
   },
+  routeName: {
+    fontSize: 16,
+  },
+  removeButton: {
+    width: '100%',
+  },
 });
 
 export default EstudianteSeleccionRuta;
-
-
